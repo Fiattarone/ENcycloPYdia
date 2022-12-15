@@ -5,7 +5,18 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 import time
 import json
+import requests
+from bs4 import BeautifulSoup
+from pprint import pprint
+import lxml
 
+
+
+headers = {
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/101.0.4951.67 Safari/537.36"
+}
 
 """
 The goal here will be to run through a text file of 479k english words 
@@ -46,13 +57,13 @@ Run thru settings and config
 if __name__ == '__main__':
     print('Welcome to ENcycloPYdia.')
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("start-maximized")
-    options.add_argument("disable-infobars")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--verbose")
-
-    driver = webdriver.Chrome(options=options)
+    # options = webdriver.ChromeOptions()
+    # options.add_argument("start-maximized")
+    # options.add_argument("disable-infobars")
+    # options.add_argument("--disable-extensions")
+    # options.add_argument("--verbose")
+    #
+    # driver = webdriver.Chrome(options=options)
 
     with open("words.txt", "r") as f:
         words = [line.rstrip() for line in f]
@@ -73,19 +84,31 @@ if __name__ == '__main__':
         else:
             for entry in enpy["words"]:
                 print(f'Our entry is: {entry}')
-            last_entry = enpy["words"][-1]
+            last_entry = enpy["words"][-1]["word"]
     finally:
         print("Finished reading JSON.")
 
-    # try:
-    #     for word in words:
-    #         # check to see if the word is already in the json
-    #         if word not in enpy["words"]:
-    #             print(f"Attempting to grab definition of {word}")
-    #             # driver.get("https://www.google.com")
-    #             # print(driver.find_element(By.TAG_NAME, "p").text)
-    # finally:
-    #     print("Finished running words.")
+
+    # we should start at the last_entry if it exists
+    start = 0
+    if len(last_entry) > 0:
+        # Start with the word after the last entry
+        start = words.index(last_entry)+1
+    for word in words[start:len(words)-1]:
+        # check to see if the word is already in the json
+        # if word not in enpy["words"]:
+        try:
+            print(f"Attempting to grab definition of {word}")
+            response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
+            soup = BeautifulSoup(response.text, "lxml")
+            definition = soup.find(attrs={"data-dobid": "dfn"}).getText()
+            print(definition) # nice! 
+
+            # driver.get(f"https://www.google.com/search?q=define+{word}")
+            # print(driver.find_element(By.CSS_SELECTOR, '[data-dobid="dfn"] > span').text) # Definition
+        finally:
+            print("Finished scrape.")
+    print("Finished running words.")
 
 
     # driver.get("https://www.google.com")
