@@ -1,13 +1,8 @@
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
 import time
 import json
 import requests
 from bs4 import BeautifulSoup
-from pprint import pprint
+from colorama import Fore, Style
 import lxml
 
 
@@ -49,21 +44,12 @@ Need to read words.txt line by line and compile a JSON that contains:
 
 """
 
-"""
-Export CSV from DoorLoop
-Run thru settings and config
-"""
+def cprint(color, msg):
+    print(color + msg + Style.RESET_ALL)
+
 
 if __name__ == '__main__':
-    print('Welcome to ENcycloPYdia.')
-
-    # options = webdriver.ChromeOptions()
-    # options.add_argument("start-maximized")
-    # options.add_argument("disable-infobars")
-    # options.add_argument("--disable-extensions")
-    # options.add_argument("--verbose")
-    #
-    # driver = webdriver.Chrome(options=options)
+    cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
 
     with open("words.txt", "r") as f:
         words = [line.rstrip() for line in f]
@@ -80,36 +66,40 @@ if __name__ == '__main__':
     last_entry = ""
     try:
         if len(enpy["words"]) == 0:
-            print("No words have been recorded.")
+            cprint(Fore.RED, "No words have been recorded.")
         else:
             for entry in enpy["words"]:
-                print(f'Our entry is: {entry}')
+                cprint(Fore.BLUE, f'Our entry is: {entry}')
             last_entry = enpy["words"][-1]["word"]
     finally:
-        print("Finished reading JSON.")
+        cprint(Fore.GREEN, "Finished reading JSON.")
 
-
-    # we should start at the last_entry if it exists
     start = 0
+
     if len(last_entry) > 0:
         # Start with the word after the last entry
         start = words.index(last_entry)+1
-    for word in words[start:len(words)-1]:
-        # check to see if the word is already in the json
-        # if word not in enpy["words"]:
+
+    for count, word in enumerate(words[start:len(words)-1]):
+        # temporary limiter
+        if count > 10:
+            break
+
         try:
-            print(f"Attempting to grab definition of {word}")
+            cprint(Fore.BLUE, f"Attempting to grab definition of '{word}'")
             response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
             soup = BeautifulSoup(response.text, "lxml")
             definition = soup.find(attrs={"data-dobid": "dfn"}).getText()
-            print(definition) # nice! 
-
-            # driver.get(f"https://www.google.com/search?q=define+{word}")
-            # print(driver.find_element(By.CSS_SELECTOR, '[data-dobid="dfn"] > span').text) # Definition
+            print(definition) # nice!
+        except AttributeError:
+            # try dictionary.com as backup
+            try:
+                response = requests.get(url=f"https://www.dictionary.com/browse/{word}", headers=headers)
+                soup = BeautifulSoup(response.text, "lxml")
+                definition = soup.find(attrs={"class": "one-click-content"}).getText()
+                print(definition)
+            finally:
+                print("Checked first backup...")
         finally:
-            print("Finished scrape.")
+            cprint(Fore.GREEN, f"Finished scrape #{count+1}")
     print("Finished running words.")
-
-
-    # driver.get("https://www.google.com")
-    # print(driver.find_element(By.TAG_NAME, "p").text)
