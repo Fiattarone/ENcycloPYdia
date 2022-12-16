@@ -44,8 +44,22 @@ Need to read words.txt line by line and compile a JSON that contains:
 
 """
 
+
 def cprint(color, msg):
     print(color + msg + Style.RESET_ALL)
+
+
+def run_second_source():
+    # try dictionary.com as backup
+    try:
+        def_response = requests.get(url=f"https://www.dictionary.com/browse/{word}", headers=headers)
+        dict_soup = BeautifulSoup(def_response.text, "lxml")
+        def_definition = dict_soup.find(attrs={"class": "one-click-content"}).getText()
+        print(def_definition)
+    except AttributeError:
+        cprint(Fore.RED, "Final source failed.")
+    else:
+        cprint(Fore.YELLOW, f"Definition ✔ #{count + 1} Scraped from source #2")
 
 
 if __name__ == '__main__':
@@ -85,21 +99,23 @@ if __name__ == '__main__':
         if count > 10:
             break
 
-        try:
-            cprint(Fore.BLUE, f"Attempting to grab definition of '{word}'")
-            response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
-            soup = BeautifulSoup(response.text, "lxml")
-            definition = soup.find(attrs={"data-dobid": "dfn"}).getText()
-            print(definition) # nice!
-        except AttributeError:
-            # try dictionary.com as backup
-            try:
-                response = requests.get(url=f"https://www.dictionary.com/browse/{word}", headers=headers)
-                soup = BeautifulSoup(response.text, "lxml")
-                definition = soup.find(attrs={"class": "one-click-content"}).getText()
-                print(definition)
-            finally:
-                print("Checked first backup...")
-        finally:
-            cprint(Fore.GREEN, f"Finished scrape #{count+1}")
+        cprint(Fore.BLUE, f"Attempting to grab definition of '{word}'")
+        response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
+        soup = BeautifulSoup(response.text, "lxml")
+
+        # Get Definition
+        definition = soup.find_all(attrs={"data-dobid": "dfn"})
+        definitions = [entry.getText() for entry in definition if len(definition) > 0]
+        print(definitions)
+
+        if len(definitions) < 1:
+            cprint(Fore.RED, "Nothing found, checking next source...")
+            run_second_source()
+        else:
+            # Multiple definitions scraped
+            cprint(Fore.GREEN, f"Definition ✔ #{count + 1} Scraped from source #1")
+
+        # Get synonyms
+        # Get antonyms
+        # Get topics
     print("Finished running words.")
