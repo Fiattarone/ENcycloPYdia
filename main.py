@@ -1,3 +1,4 @@
+
 import time
 import json
 import requests
@@ -49,17 +50,37 @@ def cprint(color, msg):
     print(color + msg + Style.RESET_ALL)
 
 
-def run_second_source():
+def no_results():
+    cprint(Fore.RED, "Nothing found, checking next source...")
+
+
+def check_next_def_source(word):
     # try dictionary.com as backup
     try:
         def_response = requests.get(url=f"https://www.dictionary.com/browse/{word}", headers=headers)
         dict_soup = BeautifulSoup(def_response.text, "lxml")
         def_definition = dict_soup.find(attrs={"class": "one-click-content"}).getText()
-        print(def_definition)
+        cprint(Fore.YELLOW, def_definition)
     except AttributeError:
         cprint(Fore.RED, "Final source failed.")
     else:
         cprint(Fore.YELLOW, f"Definition ✔ #{count + 1} Scraped from source #2")
+
+
+def check_next_syn_source(word):
+    # https://www.thesaurus.com/browse/a
+    # div ul li a
+    # data-testid="word-grid-container"
+
+    try:
+        syn_response = requests.get(url=f'https://www.thesaurus.com/browse/{word}')
+        syn_soup = BeautifulSoup(syn_response.text, 'lxml')
+        spanned_synonyms = syn_soup.select('div[data-testid="word-grid-container"] > ul > li > a')
+        synonyms = [syn.getText() for syn in spanned_synonyms]
+        cprint(Fore.LIGHTCYAN_EX, ' '.join(synonyms))
+    finally:
+        if len(synonyms) < 1:
+            cprint(Fore.RED, "Final synonyms source failed, not recording any synonyms.")
 
 
 if __name__ == '__main__':
@@ -99,23 +120,35 @@ if __name__ == '__main__':
         if count > 10:
             break
 
-        cprint(Fore.BLUE, f"Attempting to grab definition of '{word}'")
         response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
         soup = BeautifulSoup(response.text, "lxml")
 
         # Get Definition
+        cprint(Fore.BLUE, f"Attempting to grab definition of '{word}':")
         definition = soup.find_all(attrs={"data-dobid": "dfn"})
         definitions = [entry.getText() for entry in definition if len(definition) > 0]
-        print(definitions)
+        cprint(Fore.BLUE, ' '.join(definitions))
 
         if len(definitions) < 1:
-            cprint(Fore.RED, "Nothing found, checking next source...")
-            run_second_source()
+            no_results()
+            check_next_def_source(word=word)
         else:
             # Multiple definitions scraped
+            # insert whole definitions into JSON
             cprint(Fore.GREEN, f"Definition ✔ #{count + 1} Scraped from source #1")
 
         # Get synonyms
+        cprint(Fore.LIGHTMAGENTA_EX, f"Attempting to grab synonym of '{word}':")
+        spanned_synonyms = soup.select('div[data-mh] > div[data-lb] > span')
+        synonyms = [item.getText() for item in spanned_synonyms]
+        cprint(Fore.LIGHTMAGENTA_EX, ' '.join(synonyms))
+
+        if len(synonyms) < 1:
+            no_results()
+            check_next_syn_source(word=word)
+        else:
+            cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{count + 1} Scraped from source #1")
+
         # Get antonyms
         # Get topics
     print("Finished running words.")
