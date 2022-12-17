@@ -54,10 +54,10 @@ def no_results():
     cprint(Fore.RED, "Nothing found, checking next source...")
 
 
-def check_next_def_source(word):
+def check_next_def_source(lookup_word):
     # try dictionary.com as backup
     try:
-        def_response = requests.get(url=f"https://www.dictionary.com/browse/{word}", headers=headers)
+        def_response = requests.get(url=f"https://www.dictionary.com/browse/{lookup_word}", headers=headers)
         dict_soup = BeautifulSoup(def_response.text, "lxml")
         def_definition = dict_soup.find(attrs={"class": "one-click-content"}).getText()
         cprint(Fore.YELLOW, def_definition)
@@ -67,20 +67,17 @@ def check_next_def_source(word):
         cprint(Fore.YELLOW, f"Definition ✔ #{count + 1} Scraped from source #2")
 
 
-def check_next_syn_source(word):
-    # https://www.thesaurus.com/browse/a
-    # div ul li a
-    # data-testid="word-grid-container"
-
+def check_next_syn_source(lookup_word):
+    # try thesaurus.com as backup
     try:
-        syn_response = requests.get(url=f'https://www.thesaurus.com/browse/{word}')
+        syn_response = requests.get(url=f'https://www.thesaurus.com/browse/{lookup_word}')
         syn_soup = BeautifulSoup(syn_response.text, 'lxml')
-        spanned_synonyms = syn_soup.select('div[data-testid="word-grid-container"] > ul > li > a')
-        synonyms = [syn.getText() for syn in spanned_synonyms]
-        cprint(Fore.LIGHTCYAN_EX, ' '.join(synonyms))
+        syn_synonyms = syn_soup.select('div[data-testid="word-grid-container"] > ul > li > a')
+        syns = [syn.getText() for syn in syn_synonyms]
+        cprint(Fore.LIGHTCYAN_EX, ' '.join(syns))
     finally:
         if len(synonyms) < 1:
-            cprint(Fore.RED, "Final synonyms source failed, not recording any synonyms.")
+            cprint(Fore.RED, "Final synonym source failed, not recording any synonyms.")
 
 
 if __name__ == '__main__':
@@ -131,7 +128,7 @@ if __name__ == '__main__':
 
         if len(definitions) < 1:
             no_results()
-            check_next_def_source(word=word)
+            check_next_def_source(lookup_word=word)
         else:
             # Multiple definitions scraped
             # insert whole definitions into JSON
@@ -145,7 +142,7 @@ if __name__ == '__main__':
 
         if len(synonyms) < 1:
             no_results()
-            check_next_syn_source(word=word)
+            check_next_syn_source(lookup_word=word)
         else:
             cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{count + 1} Scraped from source #1")
 
