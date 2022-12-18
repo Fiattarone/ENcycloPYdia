@@ -147,5 +147,21 @@ if __name__ == '__main__':
             cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{count + 1} Scraped from source #1")
 
         # Get antonyms
+        # Lets grab from thesaurus.com
+        antonym_response = requests.get(url=f'https://www.thesaurus.com/browse/{word}')
+        ant_soup = BeautifulSoup(antonym_response.text, 'lxml')
+        ant_antonyms = ant_soup.select('div#antonyms > div[data-testid="word-grid-container"] > ul')
+        print(ant_antonyms)
+        antonyms = [antonym.getText() for antonym in ant_antonyms]
+        cprint(Fore.LIGHTCYAN_EX, ' '.join(antonyms))
+        print(antonyms)
+        if len(antonyms) < 1:
+            no_results()
+            # check_next_syn_source(lookup_word=word)
+        else:
+            cprint(Fore.LIGHTYELLOW_EX, f"Antonym pack ✔ #{count + 1} Scraped from source #1")
+
+
         # Get topics
+        cprint(Fore.LIGHTYELLOW_EX, f"Attempting to grab topics of '{word}':")
     print("Finished running words.")
