@@ -28,7 +28,7 @@ Need to read words.txt line by line and compile a JSON that contains:
             definition: "",
             synonyms: "",
             antonyms: "",
-            topics: "",
+            topics: "", <-- ditch for now.*
         },...
     ]
 }
@@ -38,11 +38,15 @@ Need to read words.txt line by line and compile a JSON that contains:
 1. Check words.txt to see if there are words remaining
 
 2. If there are, read text file line by line
-    A) While line is read, Google search for word
+    A) While line is read, Google/Dictionary/Thesaurus search for word
     B) try/except to see if we hit a 429 rate limit
     B) If dictionary entry exists, record to json
     C) Delete word from words.txt
 
+
+* I'm thinking we'll come back for topics later if necessary. 
+Still doing research but this seems like a good lead:
+https://medium.com/@soorajsubrahmannian/extracting-hidden-topics-in-a-corpus-55b2214fc17d
 """
 
 
@@ -56,6 +60,7 @@ def no_results():
 
 def check_next_def_source(lookup_word):
     # try dictionary.com as backup
+    def_definition = []
     try:
         def_response = requests.get(url=f"https://www.dictionary.com/browse/{lookup_word}", headers=headers)
         dict_soup = BeautifulSoup(def_response.text, "lxml")
@@ -65,10 +70,13 @@ def check_next_def_source(lookup_word):
         cprint(Fore.RED, "Final source failed.")
     else:
         cprint(Fore.YELLOW, f"Definition ✔ #{count + 1} Scraped from source #2")
+    finally:
+        return def_definition
 
 
 def check_next_syn_source(lookup_word):
     # try thesaurus.com as backup
+    syns = []
     try:
         syn_response = requests.get(url=f'https://www.thesaurus.com/browse/{lookup_word}')
         syn_soup = BeautifulSoup(syn_response.text, 'lxml')
@@ -78,31 +86,36 @@ def check_next_syn_source(lookup_word):
     finally:
         if len(synonyms) < 1:
             cprint(Fore.RED, "Final synonym source failed, not recording any synonyms.")
+        return syns
 
 
 if __name__ == '__main__':
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
-
+    empty_dictionary = {'words': []}
     with open("words.txt", "r") as f:
         words = [line.rstrip() for line in f]
 
     try:
-        j = open('ENcycloPYdia.json')
-        enpy = json.load(j)
+        with open('ENcycloPYdia.json', 'r') as openfile:
+            enpy = json.load(openfile)
     except json.decoder.JSONDecodeError:
         # empty JSON, lets fill:
-        enpy = json.dumps({"words": []}, indent=4)
+        # enpy = json.dumps(empty_dictionary, indent=4)
         with open("ENcycloPYdia.json", "w") as outfile:
-            outfile.write(enpy)
+            # outfile.write(enpy)
+            json.dump(empty_dictionary, outfile)
 
     last_entry = ""
     try:
-        if len(enpy["words"]) == 0:
-            cprint(Fore.RED, "No words have been recorded.")
-        else:
-            for entry in enpy["words"]:
-                cprint(Fore.BLUE, f'Our entry is: {entry}')
-            last_entry = enpy["words"][-1]["word"]
+        with open('ENcycloPYdia.json', 'r') as openfile:
+            enpy = json.load(openfile)
+            print(enpy)
+            if len(enpy['words']) == 0:
+                cprint(Fore.RED, "No words have been recorded.")
+            else:
+                for entry in enpy['words']:
+                    cprint(Fore.BLUE, f'Our entry is: {entry}')
+                last_entry = enpy['words'][-1]["word"]
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
@@ -113,9 +126,10 @@ if __name__ == '__main__':
         start = words.index(last_entry)+1
 
     for count, word in enumerate(words[start:len(words)-1]):
-        # temporary limiter
-        if count > 10:
-            break
+        alt_syns, alt_defs = [], []
+        # # temporary limiter
+        # if count > 10:
+        #     break
 
         response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
         soup = BeautifulSoup(response.text, "lxml")
@@ -124,11 +138,12 @@ if __name__ == '__main__':
         cprint(Fore.BLUE, f"Attempting to grab definition of '{word}':")
         definition = soup.find_all(attrs={"data-dobid": "dfn"})
         definitions = [entry.getText() for entry in definition if len(definition) > 0]
+        # print(definitions)
         cprint(Fore.BLUE, ' '.join(definitions))
 
         if len(definitions) < 1:
             no_results()
-            check_next_def_source(lookup_word=word)
+            alt_defs = check_next_def_source(lookup_word=word)
         else:
             # Multiple definitions scraped
             # insert whole definitions into JSON
@@ -142,7 +157,7 @@ if __name__ == '__main__':
 
         if len(synonyms) < 1:
             no_results()
-            check_next_syn_source(lookup_word=word)
+            alt_syns = check_next_syn_source(lookup_word=word)
         else:
             cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{count + 1} Scraped from source #1")
 
@@ -151,17 +166,35 @@ if __name__ == '__main__':
         antonym_response = requests.get(url=f'https://www.thesaurus.com/browse/{word}')
         ant_soup = BeautifulSoup(antonym_response.text, 'lxml')
         ant_antonyms = ant_soup.select('div#antonyms > div[data-testid="word-grid-container"] > ul')
-        print(ant_antonyms)
         antonyms = [antonym.getText() for antonym in ant_antonyms]
+
+        if len(antonyms):
+            antonyms = antonyms[0].split()
+
         cprint(Fore.LIGHTCYAN_EX, ' '.join(antonyms))
-        print(antonyms)
+
         if len(antonyms) < 1:
+            # Think of another antonym source as backup, we'll come back to this
             no_results()
             # check_next_syn_source(lookup_word=word)
         else:
             cprint(Fore.LIGHTYELLOW_EX, f"Antonym pack ✔ #{count + 1} Scraped from source #1")
 
+        if not len(definitions):
+            definitions = alt_defs
+        if not len(synonyms):
+            synonyms = alt_syns
 
-        # Get topics
-        cprint(Fore.LIGHTYELLOW_EX, f"Attempting to grab topics of '{word}':")
+        enpy["words"].append({
+            'word': word,
+            'definition': definitions,
+            'synonyms': synonyms,
+            'antonyms': antonyms
+        })
+
+        #capture word in json
+        # enpy = json.dumps(, indent=4)
+        # print(enpy)
+        with open("ENcycloPYdia.json", "w") as outfile:
+            json.dump(enpy, outfile)
     print("Finished running words.")
