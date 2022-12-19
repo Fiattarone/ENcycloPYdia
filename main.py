@@ -58,7 +58,7 @@ def no_results():
     cprint(Fore.RED, "Nothing found, checking next source...")
 
 
-def check_next_def_source(lookup_word):
+def check_next_def_source(lookup_word, dsource=0):
     # try dictionary.com as backup
     def_definition = []
     try:
@@ -69,12 +69,12 @@ def check_next_def_source(lookup_word):
     except AttributeError:
         cprint(Fore.RED, "Final source failed.")
     else:
-        cprint(Fore.YELLOW, f"Definition ✔ #{count + 1} Scraped from source #2")
+        cprint(Fore.YELLOW, f"Definition ✔ #{dsource + count + 1} Scraped from source #2")
     finally:
         return def_definition
 
 
-def check_next_syn_source(lookup_word):
+def check_next_syn_source(lookup_word, scount=0):
     # try thesaurus.com as backup
     syns = []
     try:
@@ -106,6 +106,7 @@ if __name__ == '__main__':
             json.dump(empty_dictionary, outfile)
 
     last_entry = ""
+    last_count = 0
     try:
         with open('ENcycloPYdia.json', 'r') as openfile:
             enpy = json.load(openfile)
@@ -113,8 +114,9 @@ if __name__ == '__main__':
             if len(enpy['words']) == 0:
                 cprint(Fore.RED, "No words have been recorded.")
             else:
-                for entry in enpy['words']:
-                    cprint(Fore.BLUE, f'Our entry is: {entry}')
+                for count, entry in enumerate(enpy['words']):
+                    cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                    last_count = count + 1
                 last_entry = enpy['words'][-1]["word"]
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
@@ -143,11 +145,11 @@ if __name__ == '__main__':
 
         if len(definitions) < 1:
             no_results()
-            alt_defs = check_next_def_source(lookup_word=word)
+            alt_defs = check_next_def_source(lookup_word=word, dsource=last_count)
         else:
             # Multiple definitions scraped
             # insert whole definitions into JSON
-            cprint(Fore.GREEN, f"Definition ✔ #{count + 1} Scraped from source #1")
+            cprint(Fore.GREEN, f"Definition ✔ #{last_count + count + 1} Scraped from source #1")
 
         # Get synonyms
         cprint(Fore.LIGHTMAGENTA_EX, f"Attempting to grab synonym of '{word}':")
@@ -159,7 +161,7 @@ if __name__ == '__main__':
             no_results()
             alt_syns = check_next_syn_source(lookup_word=word)
         else:
-            cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{count + 1} Scraped from source #1")
+            cprint(Fore.LIGHTGREEN_EX, f"Synonym pack ✔ #{last_count + count + 1} Scraped from source #1")
 
         # Get antonyms
         # Lets grab from thesaurus.com
@@ -178,7 +180,7 @@ if __name__ == '__main__':
             no_results()
             # check_next_syn_source(lookup_word=word)
         else:
-            cprint(Fore.LIGHTYELLOW_EX, f"Antonym pack ✔ #{count + 1} Scraped from source #1")
+            cprint(Fore.LIGHTYELLOW_EX, f"Antonym pack ✔ #{last_count + count + 1} Scraped from source #1")
 
         if not len(definitions):
             definitions = alt_defs
