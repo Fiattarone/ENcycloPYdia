@@ -90,6 +90,7 @@ def check_next_syn_source(lookup_word, scount=0):
 
 
 if __name__ == '__main__':
+    words_this_session = 0
     program_start_time = time.time()
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
     empty_dictionary = {'words': []}
@@ -206,6 +207,8 @@ if __name__ == '__main__':
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        cprint(Fore.MAGENTA, f"Time to scrape word: {elapsed_time}\n "
-                             f"Total Program Run time: {end_time - program_start_time}")
+        words_this_session += 1
+        cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n "
+                             f"Total Program Run time in minutes: {(end_time - program_start_time)/60}"
+                             f"Words processed this session: {words_this_session}")
     print("Finished running words.")
