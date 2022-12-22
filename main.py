@@ -90,6 +90,7 @@ def check_next_syn_source(lookup_word, scount=0):
 
 
 if __name__ == '__main__':
+    program_start_time = time.time()
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
     empty_dictionary = {'words': []}
     with open("words.txt", "r") as f:
@@ -127,7 +128,10 @@ if __name__ == '__main__':
         # Start with the word after the last entry
         start = words.index(last_entry)+1
 
+    average_word_process_time = 0
+
     for count, word in enumerate(words[start:len(words)-1]):
+        start_time = time.time()
         alt_syns, alt_defs = [], []
         # # temporary limiter
         # if count > 10:
@@ -199,4 +203,9 @@ if __name__ == '__main__':
         # print(enpy)
         with open("ENcycloPYdia.json", "w") as outfile:
             json.dump(enpy, outfile)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        cprint(Fore.MAGENTA, f"Time to scrape word: {elapsed_time}\n "
+                             f"Total Program Run time: {end_time - program_start_time}")
     print("Finished running words.")
