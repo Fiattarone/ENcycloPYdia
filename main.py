@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
 import lxml
-
+import math
 
 
 headers = {
@@ -208,7 +208,10 @@ if __name__ == '__main__':
         end_time = time.time()
         elapsed_time = end_time - start_time
         words_this_session += 1
-        cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n "
-                             f"Total Program Run time in minutes: {(end_time - program_start_time)/60}"
+        cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n"
+                             f"Total Program Run time: {math.floor((end_time - program_start_time)/(60*60))%60}:"
+                             f"{math.floor((end_time - program_start_time)/60)%60}:"
+                             f"{math.floor((end_time - program_start_time))%60}"
+                             f"\n"
                              f"Words processed this session: {words_this_session}")
     print("Finished running words.")
