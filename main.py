@@ -107,12 +107,14 @@ if __name__ == '__main__':
         # empty JSON, lets fill:
         # enpy = json.dumps(empty_dictionary, indent=4)
         try:
+            with open('ENcycloPYdia-Backup.json', 'r') as openfile:
+                enpy = json.load(openfile)
+                print("Opened backup--main file failed to save last.")
+        except Exception:
             with open("ENcycloPYdia.json", "w") as outfile:
                 # outfile.write(enpy)
                 json.dump(empty_dictionary, outfile)
-        except Exception:
-            with open('ENcycloPYdia-Backup.json', 'r') as openfile:
-                enpy = json.load(openfile)
+                print("Opened main file.")
 
     last_entry = ""
     last_count = 0
@@ -213,8 +215,10 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             cprint(Fore.RED, "You interrupted the program.")
         else:
-            with open("ENcycloPYdia-Backup.json", "w") as outfile:
-                json.dump(enpy, outfile)
+            if count % 50 == 49:
+                with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                    print("SAVING BACKUP")
+                    json.dump(enpy, outfile)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
