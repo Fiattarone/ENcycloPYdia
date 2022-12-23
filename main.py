@@ -89,6 +89,9 @@ def check_next_syn_source(lookup_word, scount=0):
         return syns
 
 
+# NEED TO CHECK SIZE OF JSON FILE AND MAKE A NEW ONE IF TOO LARGE
+enpy = {}
+
 if __name__ == '__main__':
     words_this_session = 0
     program_start_time = time.time()
@@ -103,9 +106,13 @@ if __name__ == '__main__':
     except json.decoder.JSONDecodeError:
         # empty JSON, lets fill:
         # enpy = json.dumps(empty_dictionary, indent=4)
-        with open("ENcycloPYdia.json", "w") as outfile:
-            # outfile.write(enpy)
-            json.dump(empty_dictionary, outfile)
+        try:
+            with open("ENcycloPYdia.json", "w") as outfile:
+                # outfile.write(enpy)
+                json.dump(empty_dictionary, outfile)
+        except Exception:
+            with open('ENcycloPYdia-Backup.json', 'r') as openfile:
+                enpy = json.load(openfile)
 
     last_entry = ""
     last_count = 0
@@ -200,10 +207,14 @@ if __name__ == '__main__':
         })
 
         #capture word in json
-        # enpy = json.dumps(, indent=4)
-        # print(enpy)
-        with open("ENcycloPYdia.json", "w") as outfile:
-            json.dump(enpy, outfile)
+        try:
+            with open("ENcycloPYdia.json", "w") as outfile:
+                json.dump(enpy, outfile)
+        except KeyboardInterrupt:
+            cprint(Fore.RED, "You interrupted the program.")
+        else:
+            with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                json.dump(enpy, outfile)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
