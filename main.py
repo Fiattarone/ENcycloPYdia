@@ -278,3 +278,4 @@ if __name__ == '__main__':
                         print("SAVED STATS BACKUP")
 
     print("Finished running words.")
+    
