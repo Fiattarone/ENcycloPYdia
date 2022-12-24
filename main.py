@@ -113,7 +113,6 @@ if __name__ == '__main__':
                 json.dump(stats, outstats)
                 print('Opening blank stats.')
 
-
     words_this_session = 0
     program_start_time = time.time()
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
@@ -246,7 +245,19 @@ if __name__ == '__main__':
                         json.dump(enpy, outfile)
                         print("SAVED BACKUP")
 
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        words_this_session += 1
+        cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n"
+                             f"Total Program Run time: {math.floor((end_time - program_start_time)/(60*60))%60}:"
+                             f"{math.floor((end_time - program_start_time)/60)%60}:"
+                             f"{math.floor((end_time - program_start_time))%60}"
+                             f"\n"
+                             f"Words processed this session: {words_this_session}")
+
         # Record stats
+        # Avg Words per hour
+        # avg Words per day
         stats['last_program_runtime'] = end_time - program_start_time
         stats['words_scraped_last_session'] = words_this_session
         stats['average_seconds_to_scrape'] = (end_time - program_start_time) / words_this_session
@@ -263,17 +274,7 @@ if __name__ == '__main__':
             if count % 50 == 0:
                 if overwrite_backup:
                     with open("stats-backup.json", "w") as outfile:
-                        json.dump(enpy, outfile)
+                        json.dump(stats, outfile)
                         print("SAVED STATS BACKUP")
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        words_this_session += 1
-        cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n"
-                             f"Total Program Run time: {math.floor((end_time - program_start_time)/(60*60))%60}:"
-                             f"{math.floor((end_time - program_start_time)/60)%60}:"
-                             f"{math.floor((end_time - program_start_time))%60}"
-                             f"\n"
-                             f"Words processed this session: {words_this_session}")
 
     print("Finished running words.")
