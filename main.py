@@ -89,10 +89,31 @@ def check_next_syn_source(lookup_word, scount=0):
         return syns
 
 
-# NEED TO CHECK SIZE OF JSON FILE AND MAKE A NEW ONE IF TOO LARGE
 enpy = {}
+stats = {
+    'average_seconds_to_scrape': 0,
+    'last_program_runtime': 0,
+    'words_scraped_last_session': 0
+}
 
 if __name__ == '__main__':
+    # Load previous stats from json
+
+    try:
+        with open('stats.json', 'r') as openstats:
+            stats = json.load(openstats)
+            print("Opened stats successfully.")
+    except json.decoder.JSONDecodeError:
+        try:
+            with open('stats-backup.json', 'r') as openstats:
+                stats = json.load(openstats)
+                print('Opened stats-backup--main file failed to save last.')
+        except Exception:
+            with open('stats.json', 'w') as outstats:
+                json.dump(stats, outstats)
+                print('Opening blank stats.')
+
+
     words_this_session = 0
     program_start_time = time.time()
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
@@ -142,9 +163,6 @@ if __name__ == '__main__':
     for count, word in enumerate(words[start:len(words)-1]):
         start_time = time.time()
         alt_syns, alt_defs = [], []
-        # # temporary limiter
-        # if count > 10:
-        #     break
 
         response = requests.get(url=f"https://www.google.com/search?q=define+{word}", headers=headers)
         soup = BeautifulSoup(response.text, "lxml")
@@ -153,7 +171,6 @@ if __name__ == '__main__':
         cprint(Fore.BLUE, f"Attempting to grab definition of '{word}':")
         definition = soup.find_all(attrs={"data-dobid": "dfn"})
         definitions = [entry.getText() for entry in definition if len(definition) > 0]
-        # print(definitions)
         cprint(Fore.BLUE, ' '.join(definitions))
 
         if len(definitions) < 1:
@@ -207,12 +224,13 @@ if __name__ == '__main__':
             'antonyms': antonyms
         })
 
-        #capture word in json
+        # capture word in json
         try:
-            #Lets see if only saving every 5 words speeds things up a bit
+            # Saving every 5 words provides performance boost over every single word
             if count % 5 == 4:
                 with open("ENcycloPYdia.json", "w") as outfile:
                     json.dump(enpy, outfile)
+                print("MAINFILE SAVED.")
         except KeyboardInterrupt:
             cprint(Fore.RED, "You interrupted the program.")
         else:
@@ -221,8 +239,32 @@ if __name__ == '__main__':
                     if input("Do you want to overwrite the backup file? (y/n)").lower() == "y":
                         overwrite_backup = True
                         with open("ENcycloPYdia-Backup.json", "w") as outfile:
-                            print("SAVING BACKUP")
                             json.dump(enpy, outfile)
+                        print("SAVED BACKUP")
+                else:
+                    with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                        json.dump(enpy, outfile)
+                        print("SAVED BACKUP")
+
+        # Record stats
+        stats['last_program_runtime'] = end_time - program_start_time
+        stats['words_scraped_last_session'] = words_this_session
+        stats['average_seconds_to_scrape'] = (end_time - program_start_time) / words_this_session
+
+        # Output stats to json
+        try:
+            if count % 5 == 3:
+                with open("stats.json", "w") as outfile:
+                    json.dump(stats, outfile)
+                print("STATS MAINFILE SAVED.")
+        except KeyboardInterrupt:
+            cprint(Fore.RED, "You interrupted the program.")
+        else:
+            if count % 50 == 0:
+                if overwrite_backup:
+                    with open("stats-backup.json", "w") as outfile:
+                        json.dump(enpy, outfile)
+                        print("SAVED STATS BACKUP")
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -233,4 +275,5 @@ if __name__ == '__main__':
                              f"{math.floor((end_time - program_start_time))%60}"
                              f"\n"
                              f"Words processed this session: {words_this_session}")
+
     print("Finished running words.")
