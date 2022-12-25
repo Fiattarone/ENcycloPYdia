@@ -93,7 +93,9 @@ enpy = {}
 stats = {
     'average_seconds_to_scrape': 0,
     'last_program_runtime': 0,
-    'words_scraped_last_session': 0
+    'words_scraped_last_session': 0,
+    'average_words_per_hour': 0,
+    'average_words_per_day': 0
 }
 
 if __name__ == '__main__':
@@ -256,15 +258,16 @@ if __name__ == '__main__':
                              f"Words processed this session: {words_this_session}")
 
         # Record stats
-        # Avg Words per hour
         # avg Words per day
         stats['last_program_runtime'] = end_time - program_start_time
         stats['words_scraped_last_session'] = words_this_session
         stats['average_seconds_to_scrape'] = (end_time - program_start_time) / words_this_session
+        stats['average_words_per_hour'] = ((end_time - program_start_time)/(60*60)) / words_this_session
+        stats['average_words_per_day'] = ((end_time - program_start_time) / (60 * 60 * 24)) / words_this_session
 
         # Output stats to json
         try:
-            if count % 5 == 3:
+            if count % 25 == 24:
                 with open("stats.json", "w") as outfile:
                     json.dump(stats, outfile)
                 print("STATS MAINFILE SAVED.")
@@ -278,4 +281,3 @@ if __name__ == '__main__':
                         print("SAVED STATS BACKUP")
 
     print("Finished running words.")
-    
