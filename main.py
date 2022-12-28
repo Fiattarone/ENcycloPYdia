@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from colorama import Fore, Style
 import lxml
 import math
-
+import ast
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -89,6 +89,37 @@ def check_next_syn_source(lookup_word, scount=0):
         return syns
 
 
+def validate_json(filename):
+    with open(filename, 'r') as f:
+        json_str = ''
+        obj = None
+        obj2 = None
+        for line in f:
+            json_str += line
+            print(json_str)
+            # if 'es", "definition": ' in json_str:
+            #     json_str = json_str[0:-21]
+            #     json_str += '}]}'
+            #     print(json_str)
+            try:
+                print('inside try')
+                obj = json.loads(json_str)
+            except json.decoder.JSONDecodeError:
+                print(obj)
+                json_str = ''
+                cprint(Fore.RED, "ERROR")
+                continue
+            else:
+                obj2 = obj
+        print(obj2)
+        if obj2 is not None:
+            return obj2
+        with open('ENcycloPYdia-Backup.json', r) as g:
+            obj = json.load(g)
+            print(obj)
+            return obj
+
+
 enpy = {}
 stats = {
     'average_seconds_to_scrape': 0,
@@ -119,37 +150,72 @@ if __name__ == '__main__':
     program_start_time = time.time()
     cprint(Fore.YELLOW, 'Welcome to ENcycloPYdia.')
     empty_dictionary = {'words': []}
+
     with open("words.txt", "r") as f:
         words = [line.rstrip() for line in f]
-
     try:
         with open('ENcycloPYdia.json', 'r') as openfile:
             enpy = json.load(openfile)
             print("Opened main file.")
     except json.decoder.JSONDecodeError:
         try:
+            data = validate_json('ENcycloPYdia.json')
+            if data is not None:
+                enpy = data
+                print(enpy)
+        except json.decoder.JSONDecodeError:
             with open('ENcycloPYdia-Backup.json', 'r') as openfile:
                 enpy = json.load(openfile)
                 print("Opened backup--main file failed to save last.")
-        except Exception:
-            with open("ENcycloPYdia.json", "w") as outfile:
-                json.dump(empty_dictionary, outfile)
-                print("Opened blank.")
+        finally:
+            print("Tried to validate. Checking for human approval:")
+            for count, entry in enumerate(enpy['words']):
+                cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                last_count = count + 1
+            if input("Do you want to save and continue?") == 'y':
+                with open("ENcycloPYdia.json", "w") as outfile:
+                    json.dump(enpy, outfile)
+                print("MAINFILE SAVED.")
+
+        if enpy is None:
+            try:
+                with open('ENcycloPYdia-Backup.json', 'r') as openfile:
+                    enpy = json.load(openfile)
+                    print("Opened backup--main file failed to save last.")
+            except Exception:
+                with open("ENcycloPYdia.json", "w") as outfile:
+                    json.dump(empty_dictionary, outfile)
+                    print("Opened blank.")
 
     overwrite_backup = False
     last_entry = ""
     last_count = 0
+
     try:
-        with open('ENcycloPYdia.json', 'r') as openfile:
-            enpy = json.load(openfile)
-            print(enpy)
-            if len(enpy['words']) == 0:
-                cprint(Fore.RED, "No words have been recorded.")
-            else:
-                for count, entry in enumerate(enpy['words']):
-                    cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
-                    last_count = count + 1
-                last_entry = enpy['words'][-1]["word"]
+        user_input = input("Do you want to load from main or backup? (m/b)")
+
+        if user_input == 'm':
+            with open('ENcycloPYdia.json', 'r') as openfile:
+                enpy = json.load(openfile)
+                print(enpy)
+                if len(enpy['words']) == 0:
+                    cprint(Fore.RED, "No words have been recorded.")
+                else:
+                    for count, entry in enumerate(enpy['words']):
+                        cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                        last_count = count + 1
+                    last_entry = enpy['words'][-1]["word"]
+        elif user_input == 'b':
+            with open('ENcycloPYdia-Backup.json', 'r') as openfile:
+                enpy = json.load(openfile)
+                print(enpy)
+                if len(enpy['words']) == 0:
+                    cprint(Fore.RED, "No words have been recorded.")
+                else:
+                    for count, entry in enumerate(enpy['words']):
+                        cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                        last_count = count + 1
+                    last_entry = enpy['words'][-1]["word"]
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
