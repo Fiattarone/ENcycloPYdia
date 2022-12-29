@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from colorama import Fore, Style
 import lxml
 import math
-import ast
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -33,8 +32,6 @@ Need to read words.txt line by line and compile a JSON that contains:
     ]
 }
 
-
-
 1. Check words.txt to see if there are words remaining
 
 2. If there are, read text file line by line
@@ -42,7 +39,6 @@ Need to read words.txt line by line and compile a JSON that contains:
     B) try/except to see if we hit a 429 rate limit
     B) If dictionary entry exists, record to json
     C) Delete word from words.txt
-
 
 * I'm thinking we'll come back for topics later if necessary. 
 Still doing research but this seems like a good lead:
@@ -96,7 +92,7 @@ def validate_json(filename):
         obj2 = None
         for line in f:
             json_str += line
-            print(json_str)
+            # print(json_str)
             # if 'es", "definition": ' in json_str:
             #     json_str = json_str[0:-21]
             #     json_str += '}]}'
@@ -107,13 +103,14 @@ def validate_json(filename):
             except json.decoder.JSONDecodeError:
                 print(obj)
                 json_str = ''
-                cprint(Fore.RED, "ERROR")
+                cprint(Fore.RED, "ERROR, JSON CORRUPT")
                 continue
             else:
                 obj2 = obj
-        print(obj2)
+
         if obj2 is not None:
             return obj2
+        # last resort, load backup
         with open('ENcycloPYdia-Backup.json', r) as g:
             obj = json.load(g)
             print(obj)
@@ -131,7 +128,6 @@ stats = {
 
 if __name__ == '__main__':
     # Load previous stats from json
-
     try:
         with open('stats.json', 'r') as openstats:
             stats = json.load(openstats)
