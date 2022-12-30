@@ -290,7 +290,7 @@ if __name__ == '__main__':
         # capture word in json
         try:
             # Saving every 5 words provides performance boost over every single word
-            if count % 5 == 4:
+            if count % 25  == 4:
                 with open("ENcycloPYdia.json", "w") as outfile:
                     json.dump(enpy, outfile)
                 print("MAINFILE SAVED.")
