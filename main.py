@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from colorama import Fore, Style
 import lxml
 import math
+import pprint
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -117,6 +118,30 @@ def validate_json(filename):
             return obj
 
 
+def word_search(word_dict, word_input):
+    """
+    # what if we did a binary search based off of letter?
+    # 1 map abc > 123
+    # 2 ????
+    # 3 profit!
+
+    :param word_dict:
+    :param word_input:
+    :return:
+    """
+
+    # above needs implementation
+    search_start = time.time()
+    for w in word_dict['words']:
+        if word_input == w['word']:
+            print('Found word!')
+            pprint.pprint(w)
+            print(f'Search time was: {time.time() - search_start}')
+            return True
+    return False
+    # print([word_input])
+
+
 enpy = {}
 stats = {
     'average_seconds_to_scrape': 0,
@@ -215,6 +240,14 @@ if __name__ == '__main__':
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
+    searching_words = True
+    while searching_words:
+        if input("Do you want to search for a word? (y == yes)").lower() == "y":
+            user_input = input("word: ").lower()
+            if not word_search(enpy, user_input):
+                cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+        else:
+            searching_words = False
     start = 0
 
     if len(last_entry) > 0:
@@ -341,5 +374,14 @@ if __name__ == '__main__':
                     with open("stats-backup.json", "w") as outfile:
                         json.dump(stats, outfile)
                         print("SAVED STATS BACKUP")
+
+    if count >= len(enpy['words']):
+        with open("ENcycloPYdia.json", "w") as outfile:
+            json.dump(enpy, outfile)
+        print("MAINFILE SAVED.")
+
+        with open("stats.json", "w") as outfile:
+            json.dump(stats, outfile)
+        print("STATS MAINFILE SAVED.")
 
     print("Finished running words.")
