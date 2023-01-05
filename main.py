@@ -151,6 +151,30 @@ def word_search(word_dict, word_input):
     # print([word_input])
 
 
+def sanitize_dict(word_dict):
+    """
+    Need to sanitize data as it wraps up
+
+    :param word_dict:
+    :return:
+    """
+    sanitize_time = time.time()
+    uniques = []
+
+    for word_entry in word_dict['words']:
+        uniques = [d for d in word_entry['definition'] if d != '' and d not in uniques]
+        word_entry['definition'], uniques = uniques, []
+
+        # Dont reset uniques for antonyms because synonyms might contain antonyms due to Google scrape
+        uniques = [a for a in word_entry['antonyms'] if a != '' and a not in uniques]
+        word_entry['antonyms'] = uniques
+        uniques = [s for s in word_entry['synonyms'] if s != '' and s not in uniques]
+        word_entry['synonyms'] = uniques
+    print(f'Sanitize time was: {time.time() - sanitize_time}')
+
+    return word_dict
+
+
 enpy = {}
 stats = {
     'average_seconds_to_scrape': 0,
@@ -249,9 +273,12 @@ if __name__ == '__main__':
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
+    if input('Would you like to sanitize the JSON? (y == yes) ').lower() == 'y':
+        enpy = sanitize_dict(enpy)
+
     searching_words = True
     while searching_words:
-        if input("Do you want to search for a word? (y == yes)").lower() == "y":
+        if input("Do you want to search for a word? (y == yes) ").lower() == "y":
             user_input = input("word: ").lower()
             if not word_search(enpy, user_input):
                 cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
@@ -384,7 +411,7 @@ if __name__ == '__main__':
                         json.dump(stats, outfile)
                         print("SAVED STATS BACKUP")
 
-    if count >= len(enpy['words']):
+    if input('Do you want to save? ').lower() == 'y':
         with open("ENcycloPYdia.json", "w") as outfile:
             json.dump(enpy, outfile)
         print("MAINFILE SAVED.")
