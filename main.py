@@ -44,6 +44,15 @@ Need to read words.txt line by line and compile a JSON that contains:
 * I'm thinking we'll come back for topics later if necessary. 
 Still doing research but this seems like a good lead:
 https://medium.com/@soorajsubrahmannian/extracting-hidden-topics-in-a-corpus-55b2214fc17d
+
+*****************************************************************************************
+
+01.05.23: ENPY is completed. 
+
+@TODO: 
+1. Need to incorporate rotating proxy service for future pulls
+2. Need to sanitize data (look at synonyms on "mountain" for example)
+3. Add additional sources, and make sure new entries are not duplicated or have duplicated attributes
 """
 
 
