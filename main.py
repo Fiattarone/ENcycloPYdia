@@ -7,6 +7,7 @@ from colorama import Fore, Style
 import lxml
 import math
 import pprint
+from collections import OrderedDict
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -31,6 +32,7 @@ Need to read words.txt line by line and compile a JSON that contains:
             topics: "", <-- ditch for now.*
         },...
     ]
+    "other_stuff": etc
 }
 
 1. Check words.txt to see if there are words remaining
@@ -162,14 +164,27 @@ def sanitize_dict(word_dict):
     uniques = []
 
     for word_entry in word_dict['words']:
-        uniques = [d for d in word_entry['definition'] if d != '' and d not in uniques]
-        word_entry['definition'], uniques = uniques, []
+        if type(word_entry['definition']) == list:
+            uniques = set(word_entry['definition'])
+            if '' in uniques:
+                uniques.remove('')
+            word_entry['definition'] = OrderedDict(enumerate(uniques, start=1))
 
-        # Dont reset uniques for antonyms because synonyms might contain antonyms due to Google scrape
-        uniques = [a for a in word_entry['antonyms'] if a != '' and a not in uniques]
-        word_entry['antonyms'] = uniques
-        uniques = [s for s in word_entry['synonyms'] if s != '' and s not in uniques]
-        word_entry['synonyms'] = uniques
+        if type(word_entry['antonyms']) == list:
+            uniques = set(word_entry['antonyms'])
+            if '' in uniques:
+                uniques.remove('')
+            word_entry['antonyms'] = OrderedDict(enumerate(uniques, start=1))
+
+        if type(word_entry['synonyms'] == list):
+            uniques = set(word_entry['synonyms']).difference(uniques)
+            if '' in uniques:
+                uniques.remove('')
+            for i in range(9):
+                if f'View {i+1} vulgar slang words' in uniques:
+                    uniques.remove(f'View {i+1} vulgar slang words')
+            word_entry['synonyms'] = OrderedDict(enumerate(uniques, start=1))
+
     print(f'Sanitize time was: {time.time() - sanitize_time}')
 
     return word_dict
