@@ -19,20 +19,20 @@ headers = {
 The goal here will be to run through a text file of 479k english words 
 and find definitions for each one of them.
 
-words.txt contains about 379k words. Should be decent enough.
+words.txt contains about 371k words. Should be decent enough.
 
 Need to read words.txt line by line and compile a JSON that contains:
 {
     "words": [
         {
             "word": "",
-            definition: "",
-            synonyms: "",
-            antonyms: "",
+            definition: "" || {},
+            synonyms: "" || {},
+            antonyms: "" || {},
             topics: "", <-- ditch for now.*
         },...
-    ]
-    "other_stuff": etc
+    ],
+    "stats": etc
 }
 
 1. Check words.txt to see if there are words remaining
