@@ -18,7 +18,9 @@ I hope this benefits you, I'd appreciate a shoutout or mention if it does! I do 
 
 In my dreams, ENPY gets contributed to by others. A CLI or some kind of GUI is built to allow people to insert new entries and modify existing ones. A rotating proxy is incorporated, and we successfully web scrape every possible English word source on the internet for dictionary entries from the start of humanity, to the present of humanity. One day, someone in a Spanish speaking country thinks it's cool, and we get ESPY. Then FRPY, and ITPY, and BoisenBerryPY, and PumpkinPY... 
 
-*: It's 4am and my daughter has woken me up, I don't even have any pie and I'm probably not going to eat for a while, but this would be a good spot for a shameless donation link so that you could buy me a coffee and I could write better readme's (coming soon, hold that drink for me). 
+*: It's 4am and my daughter has woken me up, I don't even have any pie and I'm probably not going to eat for a while, but this would be a good spot for a shameless donation link so that you could buy me a coffee and I could write better readme's.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Fiattarone)
 
 ---
 ## Features 
