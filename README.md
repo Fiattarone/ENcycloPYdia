@@ -4,7 +4,7 @@
 ---
 ## So, what's going on here?
 
-Sleep deprivation*, mostly, but allow me to explain in a hopefully TL;DR format: I'm building another app that requires free, unlimited access to the english language on the fly to help people study called _RabbitHole_. I need to run 500 definition searches at the same time to reflect a users' relevancy during their studies. Web scraping to accomplish this task is... well, unrealistic, unless everyone is going to willingly solve captchas all the time. Or unless I incorporate rotating proxies in each program and web scrape for available IPs constantly. Either way, I think it's more efficient to just create a JSON. Perhaps this will land in a DB, or maybe I'll just keep the full JSON with the program for now and figure out a GH Actions pipeline to keep it current. 
+Sleep deprivation*, mostly, but allow me to explain in a hopefully TL;DR format: I'm building a different app that requires free, unlimited access to the english language on the fly. This app is supposed to help people study, and I'm calling it _RabbitHole_ (I'll link you guys once there's some more headway). In this app, I need to run 500 definition searches at the same time to reflect a users' relevancy during their studies. Web scraping to accomplish this task is... well, unrealistic, unless everyone is going to willingly solve captchas all the time. Or unless I incorporate rotating proxies in each program and web scrape for available IPs constantly (thanks Adam--see footnote). Either way, I think it's more efficient to just create a JSON. Perhaps this will land in a DB, or maybe I'll just keep the full JSON with the program for now and figure out a GH Actions pipeline to keep it current. 
 
 ---
 ## Why not just X, Y, or Z instead of stealing the English Language? 
@@ -27,13 +27,23 @@ In my dreams, ENPY gets contributed to by others. A CLI or some kind of GUI is b
 
 Here's the format of the JSON in its current state:
 
-```{
+```
+{
     "words": [
         {
             "word": "",
-            definition: "" || {},
-            synonyms: "" || {},
-            antonyms: "" || {},
+            definition: "" || {
+                "number": "def",
+                ...
+            },
+            synonyms: "" || {
+                "number": "syn",
+                ...
+            },
+            antonyms: "" || {
+                "number": "ant",
+                ...
+            },
         },...
     ],
     "stats": etc
