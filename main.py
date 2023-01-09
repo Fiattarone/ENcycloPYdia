@@ -7,7 +7,7 @@ from colorama import Fore, Style
 import lxml
 import math
 import pprint
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -131,11 +131,7 @@ def validate_json(filename):
 
 def word_search(word_dict, word_input):
     """
-    # what if we did a binary search based off of letter?
-    # 1 map abc > 123
-    # 2 ????
-    # 3 profit!
-
+    Ordered word search (list)
     :param word_dict:
     :param word_input:
     :return:
@@ -151,6 +147,23 @@ def word_search(word_dict, word_input):
             return True
     return False
     # print([word_input])
+
+
+def fast_word_search(word_dict, word_input):
+    """
+    Dictionary/Object word search
+    :param word_dict:
+    :param word_input:
+    :return:
+    """
+    search_start = time.time()
+    if word_input in word_dict['words']:
+        word_found = word_dict['words'][word_input]
+        print('Found word!')
+        pprint.pprint(word_found)
+        print(f'Search time was: {time.time() - search_start}')
+        return word_found
+    return False
 
 
 def sanitize_dict(word_dict):
@@ -188,6 +201,25 @@ def sanitize_dict(word_dict):
     print(f'Sanitize time was: {time.time() - sanitize_time}')
 
     return word_dict
+
+
+def dict_conversion(dict_):
+    """
+    This is going to take in the dictionary file and convert the list version to the hashed version
+
+    :param dict_:
+    :return:
+    """
+
+    def default_factory():
+        return 'Word not found.'
+
+    new_dict = defaultdict(default_factory)
+    new_dict['words'] = {}
+    for word_entry in dict_['words']:
+        new_dict['words'][word_entry['word']] = word_entry['synonyms'], word_entry['antonyms'], word_entry['definition']
+    print(new_dict)
+    return new_dict
 
 
 enpy = {}
@@ -291,14 +323,34 @@ if __name__ == '__main__':
     if input('Would you like to sanitize the JSON? (y == yes) ').lower() == 'y':
         enpy = sanitize_dict(enpy)
 
+    if input('Convert list dictionary to object dictionary? (y == yes) ').lower() == 'y':
+        enpy = dict_conversion(enpy)
+
     searching_words = True
     while searching_words:
-        if input("Do you want to search for a word? (y == yes) ").lower() == "y":
+        if input("Do you want to list search for a word? (y == yes) ").lower() == "y":
             user_input = input("word: ").lower()
             if not word_search(enpy, user_input):
                 cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
         else:
             searching_words = False
+
+    fast_searching_words = True
+    while fast_searching_words:
+        if input("Do you want to dict search for a word? (y == yes) ").lower() == "y":
+            user_input = input("word: ").lower()
+            if not fast_word_search(enpy, user_input):
+                cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+        else:
+            fast_searching_words = False
+            if input("Do you want to save this dict? (y == yes) ").lower() == "y":
+                try:
+                    with open("ENcycloPYdia_hashed.json", "w") as outfile:
+                        json.dump(enpy, outfile)
+                    print("MAINFILE_hashed SAVED.")
+                except KeyboardInterrupt:
+                    cprint(Fore.RED, "You interrupted the program.")
+
     start = 0
 
     if len(last_entry) > 0:
