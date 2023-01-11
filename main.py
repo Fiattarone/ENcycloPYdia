@@ -123,7 +123,7 @@ def validate_json(filename):
         if obj2 is not None:
             return obj2
         # last resort, load backup
-        with open('ENcycloPYdia-Backup.json', r) as g:
+        with open('ENcycloPYdia-Backup.json', 'r') as g:
             obj = json.load(g)
             print(obj)
             return obj
@@ -217,9 +217,42 @@ def dict_conversion(dict_):
     new_dict = defaultdict(default_factory)
     new_dict['words'] = {}
     for word_entry in dict_['words']:
-        new_dict['words'][word_entry['word']] = word_entry['synonyms'], word_entry['antonyms'], word_entry['definition']
+        new_dict['words'][word_entry['word']] = {'synonyms': word_entry['synonyms'], 'antonyms': word_entry['antonyms'],
+                                                 'definition': word_entry['definition']}
     print(new_dict)
     return new_dict
+
+
+def load_from_list():
+    enpy_file = {}
+    try:
+        with open('ENcycloPYdia.json', 'r') as openlist:
+            enpy_file = json.load(openlist)
+            print("Opened mainfile--load from list successful")
+    except Exception:
+        # try loading from backup
+        print("Mainfile failed, attempting to load from backup...")
+        try:
+            with open("ENcycloPYdia-backup.json", "r") as openlist:
+                enpy_file = json.load(openlist)
+                print("Opened mainfile--load from list successful")
+        except Exception:
+            print("Backup failed to load.")
+            return False
+    return enpy_file
+
+
+def load_from_hash():
+    enpy_file = {}
+    try:
+        with open('ENcycloPYdia_hashed.json', 'r') as openhash:
+            enpy_file = json.load(openhash)
+            print("Opened mainfile_hashed--load from hash successful")
+    except Exception:
+        # try loading from backup
+        print('Mainfile_hashed failed to load.')
+        return False
+    return enpy_file
 
 
 enpy = {}
@@ -291,21 +324,30 @@ if __name__ == '__main__':
     overwrite_backup = False
     last_entry = ""
     last_count = 0
+    user_input = ''
 
     try:
-        user_input = input("Do you want to load from main or backup? (m/b)")
+        while user_input != 'ml' and user_input != 'mh' and user_input != 'b':
+            user_input = input("Do you want to load from main_list, main_hash, or backup? (ml/mh/b) ").lower()
 
-        if user_input == 'm':
-            with open('ENcycloPYdia.json', 'r') as openfile:
-                enpy = json.load(openfile)
-                print(enpy)
-                if len(enpy['words']) == 0:
-                    cprint(Fore.RED, "No words have been recorded.")
-                else:
-                    for count, entry in enumerate(enpy['words']):
-                        cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
-                        last_count = count + 1
-                    last_entry = enpy['words'][-1]["word"]
+        if user_input == 'ml':
+            enpy = load_from_list()
+            if enpy and len(enpy['words']) == 0:
+                cprint(Fore.RED, "No words have been recorded.")
+            else:
+                for count, entry in enumerate(enpy['words']):
+                    cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                    last_count = count + 1
+                last_entry = enpy['words'][-1]["word"]
+        elif user_input == 'mh':
+            enpy = load_from_hash()
+            if enpy and len(enpy['words']) == 0:
+                cprint(Fore.RED, "No words have been recorded.")
+            else:
+                for count, entry in enumerate(enpy['words']):
+                    cprint(Fore.BLUE, f'Our {count} entry is: {entry}\ndetails:{enpy["words"][entry]}')
+                    last_count = count + 1
+                last_entry = entry
         elif user_input == 'b':
             with open('ENcycloPYdia-Backup.json', 'r') as openfile:
                 enpy = json.load(openfile)
@@ -317,14 +359,43 @@ if __name__ == '__main__':
                         cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
                         last_count = count + 1
                     last_entry = enpy['words'][-1]["word"]
+    except FileNotFoundError:
+        if user_input == 'b':
+            while user_input != 'cl' and user_input != 'ch':
+                user_input = input('Backup File not found. Copy from ENPY_list or ENPY_hashed? (cl/ch)').lower()
+
+            if user_input == 'cl':
+                # load from list
+                print('loading from list...')
+                enpy = load_from_list()
+            elif user_input == 'ch':
+                # load from hash
+                print('loading from hash...')
+                enpy = load_from_hash()
+
+            if enpy is not None:
+                with open("ENcycloPYdia-backup.json", "w") as outfile:
+                    json.dump(enpy, outfile)
+        elif user_input == 'ml':
+            user_input = input('Main_list File not found. Try backup? (y/n)').lower()
+
+            if user_input == 'y':
+                # try loading backup
+                print('backup load not set yet')
+        elif user_input == 'mh':
+            user_input = input('Main_hashed File not found. Try backup? (y/n)').lower()
+
+            if user_input == 'y':
+                # try loading backup
+                print('backup load not set yet')
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
-    if input('Would you like to sanitize the JSON? (y == yes) ').lower() == 'y':
-        enpy = sanitize_dict(enpy)
+    # if input('Would you like to sanitize the JSON? (y == yes) ').lower() == 'y':
+    #     enpy = sanitize_dict(enpy)
 
-    if input('Convert list dictionary to object dictionary? (y == yes) ').lower() == 'y':
-        enpy = dict_conversion(enpy)
+    # if input('Convert list dictionary to object dictionary? (y == yes) ').lower() == 'y':
+    #     enpy = dict_conversion(enpy)
 
     searching_words = True
     while searching_words:
