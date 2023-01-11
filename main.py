@@ -325,6 +325,7 @@ if __name__ == '__main__':
     last_entry = ""
     last_count = 0
     user_input = ''
+    list_loaded = True
 
     try:
         while user_input != 'ml' and user_input != 'mh' and user_input != 'b':
@@ -348,6 +349,7 @@ if __name__ == '__main__':
                     cprint(Fore.BLUE, f'Our {count} entry is: {entry}\ndetails:{enpy["words"][entry]}')
                     last_count = count + 1
                 last_entry = entry
+            list_loaded = False
         elif user_input == 'b':
             with open('ENcycloPYdia-Backup.json', 'r') as openfile:
                 enpy = json.load(openfile)
@@ -372,9 +374,10 @@ if __name__ == '__main__':
                 # load from hash
                 print('loading from hash...')
                 enpy = load_from_hash()
+                list_loaded = False
 
             if enpy is not None:
-                with open("ENcycloPYdia-backup.json", "w") as outfile:
+                with open("ENcycloPYdia-Backup.json", "w") as outfile:
                     json.dump(enpy, outfile)
         elif user_input == 'ml':
             user_input = input('Main_list File not found. Try backup? (y/n)').lower()
@@ -399,29 +402,25 @@ if __name__ == '__main__':
 
     searching_words = True
     while searching_words:
-        if input("Do you want to list search for a word? (y == yes) ").lower() == "y":
+        if input("Do you want to search for a word? (y == yes) ").lower() == "y":
             user_input = input("word: ").lower()
-            if not word_search(enpy, user_input):
-                cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+
+            if list_loaded:
+                if not word_search(enpy, user_input):
+                    cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+            else:
+                if not fast_word_search(enpy, user_input):
+                    cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
         else:
             searching_words = False
-
-    fast_searching_words = True
-    while fast_searching_words:
-        if input("Do you want to dict search for a word? (y == yes) ").lower() == "y":
-            user_input = input("word: ").lower()
-            if not fast_word_search(enpy, user_input):
-                cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
-        else:
-            fast_searching_words = False
-            if input("Do you want to save this dict? (y == yes) ").lower() == "y":
-                try:
-                    with open("ENcycloPYdia_hashed.json", "w") as outfile:
-                        json.dump(enpy, outfile)
-                    print("MAINFILE_hashed SAVED.")
-                except KeyboardInterrupt:
-                    cprint(Fore.RED, "You interrupted the program.")
-
+            if not list_loaded:
+                if input("Do you want to save this dict? (y == yes) ").lower() == "y":
+                    try:
+                        with open("ENcycloPYdia_hashed.json", "w") as outfile:
+                            json.dump(enpy, outfile)
+                        print("MAINFILE_hashed SAVED.")
+                    except KeyboardInterrupt:
+                        cprint(Fore.RED, "You interrupted the program.")
     start = 0
 
     if len(last_entry) > 0:
