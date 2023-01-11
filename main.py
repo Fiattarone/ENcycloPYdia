@@ -306,7 +306,7 @@ if __name__ == '__main__':
             for count, entry in enumerate(enpy['words']):
                 cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
                 last_count = count + 1
-            if input("Do you want to save and continue?") == 'y':
+            if input("Do you want to save and continue? (y/n)") == 'y':
                 with open("ENcycloPYdia.json", "w") as outfile:
                     json.dump(enpy, outfile)
                 print("MAINFILE SAVED.")
@@ -328,7 +328,7 @@ if __name__ == '__main__':
     list_loaded = True
 
     try:
-        while user_input != 'ml' and user_input != 'mh' and user_input != 'b':
+        while user_input != 'ml' and user_input != 'mh' and user_input != 'b' or len(user_input) > 2:
             user_input = input("Do you want to load from main_list, main_hash, or backup? (ml/mh/b) ").lower()
 
         if user_input == 'ml':
@@ -351,7 +351,7 @@ if __name__ == '__main__':
                 last_entry = entry
             list_loaded = False
         elif user_input == 'b':
-            with open('ENcycloPYdia-Backup.json', 'r') as openfile:
+            with open('ENcycloPYdia-backup.json', 'r') as openfile:
                 enpy = json.load(openfile)
                 print(enpy)
                 if len(enpy['words']) == 0:
@@ -362,35 +362,57 @@ if __name__ == '__main__':
                         last_count = count + 1
                     last_entry = enpy['words'][-1]["word"]
     except FileNotFoundError:
-        if user_input == 'b':
-            while user_input != 'cl' and user_input != 'ch':
-                user_input = input('Backup File not found. Copy from ENPY_list or ENPY_hashed? (cl/ch)').lower()
+        try:
+            if user_input == 'b':
+                while user_input != 'cl' and user_input != 'ch':
+                    user_input = input('Backup File not found. Copy from ENPY_list or ENPY_hashed? (cl/ch)').lower()
 
-            if user_input == 'cl':
-                # load from list
-                print('loading from list...')
-                enpy = load_from_list()
-            elif user_input == 'ch':
-                # load from hash
-                print('loading from hash...')
-                enpy = load_from_hash()
-                list_loaded = False
+                if user_input == 'cl':
+                    # load from list
+                    print('loading from list...')
+                    enpy = load_from_list()
+                elif user_input == 'ch':
+                    # load from hash
+                    print('loading from hash...')
+                    enpy = load_from_hash()
+                    list_loaded = False
 
-            if enpy is not None:
-                with open("ENcycloPYdia-Backup.json", "w") as outfile:
-                    json.dump(enpy, outfile)
-        elif user_input == 'ml':
-            user_input = input('Main_list File not found. Try backup? (y/n)').lower()
+                if enpy is not None:
+                    with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                        json.dump(enpy, outfile)
+            elif user_input == 'ml':
+                user_input = input('Main_list File not found. Try backup? (y/n)').lower()
 
-            if user_input == 'y':
-                # try loading backup
-                print('backup load not set yet')
-        elif user_input == 'mh':
-            user_input = input('Main_hashed File not found. Try backup? (y/n)').lower()
+                if user_input == 'y':
+                    with open('ENcycloPYdia-backup.json', 'r') as openfile:
+                        enpy = json.load(openfile)
+                        print(enpy)
+                        if len(enpy['words']) == 0:
+                            cprint(Fore.RED, "No words have been recorded.")
+                        else:
+                            for count, entry in enumerate(enpy['words']):
+                                cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                                last_count = count + 1
+                            last_entry = enpy['words'][-1]["word"]
+            elif user_input == 'mh':
+                user_input = input('Main_hashed File not found. Try backup? (y/n)').lower()
 
-            if user_input == 'y':
-                # try loading backup
-                print('backup load not set yet')
+                if user_input == 'y':
+                    with open('ENcycloPYdia_hashed-backup.json', 'r') as openfile:
+                        enpy = json.load(openfile)
+                        print(enpy)
+                        if len(enpy['words']) == 0:
+                            cprint(Fore.RED, "No words have been recorded.")
+                        else:
+                            for count, entry in enumerate(enpy['words']):
+                                cprint(Fore.BLUE, f'Our {count} entry is: {entry}')
+                                last_count = count + 1
+                            last_entry = enpy['words'][-1]["word"]
+        except FileNotFoundError:
+            # Create blank backup
+            with open("ENcycloPYdia.json", "w") as outfile:
+                json.dump(empty_dictionary, outfile)
+                print("Backup is blank.")
     finally:
         cprint(Fore.GREEN, "Finished reading JSON.")
 
@@ -401,20 +423,20 @@ if __name__ == '__main__':
     #     enpy = dict_conversion(enpy)
 
     searching_words = True
-    while searching_words:
+    while searching_words or len(user_input) > 1:
         if input("Do you want to search for a word? (y == yes) ").lower() == "y":
             user_input = input("word: ").lower()
 
             if list_loaded:
                 if not word_search(enpy, user_input):
-                    cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+                    cprint(Fore.RED, "Word doesn't exist in ENPY_list. (Feature to add coming soon)")
             else:
                 if not fast_word_search(enpy, user_input):
-                    cprint(Fore.RED, "Word doesn't exist in ENPY. (Feature to add coming soon)")
+                    cprint(Fore.RED, "Word doesn't exist in ENPY_hashed. (Feature to add coming soon)")
         else:
             searching_words = False
             if not list_loaded:
-                if input("Do you want to save this dict? (y == yes) ").lower() == "y":
+                if input("Do you want to save this hashed form to a file? (y == yes) ").lower() == "y":
                     try:
                         with open("ENcycloPYdia_hashed.json", "w") as outfile:
                             json.dump(enpy, outfile)
@@ -496,8 +518,9 @@ if __name__ == '__main__':
         # capture word in json
         try:
             # Saving every 5 words provides performance boost over every single word
-            if count % 25  == 4:
+            if count % 25 == 4:
                 with open("ENcycloPYdia.json", "w") as outfile:
+                    enpy['stats'] = stats
                     json.dump(enpy, outfile)
                 print("MAINFILE SAVED.")
         except KeyboardInterrupt:
@@ -508,16 +531,19 @@ if __name__ == '__main__':
                     if input("Do you want to overwrite the backup file? (y/n)").lower() == "y":
                         overwrite_backup = True
                         with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                            enpy['stats'] = stats
                             json.dump(enpy, outfile)
                         print("SAVED BACKUP")
                 else:
                     with open("ENcycloPYdia-Backup.json", "w") as outfile:
+                        enpy['stats'] = stats
                         json.dump(enpy, outfile)
                         print("SAVED BACKUP")
 
         end_time = time.time()
         elapsed_time = end_time - start_time
         words_this_session += 1
+
         cprint(Fore.MAGENTA, f"Seconds to scrape word: {elapsed_time}\n"
                              f"Total Program Run time: {math.floor((end_time - program_start_time)/(60*60))%60}:"
                              f"{math.floor((end_time - program_start_time)/60)%60}:"
@@ -534,27 +560,29 @@ if __name__ == '__main__':
         stats['average_words_per_day'] = ((end_time - program_start_time) / (60 * 60 * 24)) / words_this_session
 
         # Output stats to json
-        try:
-            if count % 25 == 24:
-                with open("stats.json", "w") as outfile:
-                    json.dump(stats, outfile)
-                print("STATS MAINFILE SAVED.")
-        except KeyboardInterrupt:
-            cprint(Fore.RED, "You interrupted the program.")
-        else:
-            if count % 50 == 0:
-                if overwrite_backup:
-                    with open("stats-backup.json", "w") as outfile:
-                        json.dump(stats, outfile)
-                        print("SAVED STATS BACKUP")
+        # try:
+        #     if count % 25 == 24:
+        #         with open("stats.json", "w") as outfile:
+        #             json.dump(stats, outfile)
+        #         print("STATS MAINFILE SAVED.")
+        # except KeyboardInterrupt:
+        #     cprint(Fore.RED, "You interrupted the program.")
+        # else:
+        #     if count % 50 == 0:
+        #         if overwrite_backup:
+        #             with open("stats-backup.json", "w") as outfile:
+        #                 json.dump(stats, outfile)
+        #                 print("SAVED STATS BACKUP")
 
-    if input('Do you want to save? ').lower() == 'y':
-        with open("ENcycloPYdia.json", "w") as outfile:
-            json.dump(enpy, outfile)
-        print("MAINFILE SAVED.")
+    if list_loaded:
+        if input('Do you want to save? (y/n)').lower() == 'y':
+            with open("ENcycloPYdia.json", "w") as outfile:
+                enpy['stats'] = stats
+                json.dump(enpy, outfile)
+            print("MAINFILE SAVED w/ STATS.")
 
-        with open("stats.json", "w") as outfile:
-            json.dump(stats, outfile)
-        print("STATS MAINFILE SAVED.")
+            # with open("stats.json", "w") as outfile:
+            #     json.dump(stats, outfile)
+            # print("STATS MAINFILE SAVED.")
 
     print("Finished running words.")
