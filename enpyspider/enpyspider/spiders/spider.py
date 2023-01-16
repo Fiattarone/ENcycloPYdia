@@ -40,6 +40,3 @@ class ENPYSpider(scrapy.Spider):
             response = failure.value.response
             self.logger.error('Error: %s', response.status)
 
-
-
-dxc
