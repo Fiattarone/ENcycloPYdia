@@ -6,6 +6,7 @@ from twisted.internet.error import TimeoutError
 
 class ENPYSpider(scrapy.Spider):
     name = 'ENPYSpider'
+    proxy_pool = ''
     start_urls = ["http://httpbin.org/ip"]
     proxy_list = []
 
@@ -25,13 +26,16 @@ class ENPYSpider(scrapy.Spider):
 
     def start_requests(self):
         import requests
+
         proxy_list = requests.get('https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt').text.split(
             "\n")
         self.proxy_list = [proxy for proxy in proxy_list if proxy]
         self.proxy_pool = cycle(self.proxy_list)
+
         for url in self.start_urls:
-            for prox in self.proxy_pool:
+            for count, prox in enumerate(self.proxy_pool):
                 proxy = next(self.proxy_pool)
+                print(f"TRYING PROXY #{count}, IP: {proxy}")
                 yield scrapy.Request(url=url, meta={'proxy': proxy, 'X-Forwarded-For': ' '}, headers=self.headers,
                                      errback=self.handle_error,
                                      dont_filter=True)
