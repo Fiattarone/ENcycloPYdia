@@ -1,11 +1,14 @@
 import scrapy
 from itertools import cycle
+from scrapy.spidermiddlewares.httperror import HttpError
+from twisted.internet.error import TimeoutError
 
 
 class ENPYSpider(scrapy.Spider):
     name = 'ENPYSpider'
     start_urls = ["http://httpbin.org/ip"]
     proxy_list = []
+
     headers = {
         'Connection': 'keep-alive',
         'Cache-Control': 'max-age=0',
@@ -29,7 +32,8 @@ class ENPYSpider(scrapy.Spider):
         for url in self.start_urls:
             for prox in self.proxy_pool:
                 proxy = next(self.proxy_pool)
-                yield scrapy.Request(url=url, meta={'proxy': proxy}, headers=self.headers, errback=self.handle_error,
+                yield scrapy.Request(url=url, meta={'proxy': proxy, 'X-Forwarded-For': ' '}, headers=self.headers,
+                                     errback=self.handle_error,
                                      dont_filter=True)
 
     def parse(self, response):
@@ -39,4 +43,9 @@ class ENPYSpider(scrapy.Spider):
         if failure.check(HttpError):
             response = failure.value.response
             self.logger.error('Error: %s', response.status)
-
+        elif failure.check(TimeoutError):
+            self.logger.error("TimeoutError on %s", failure.request.url)
+            self.logger.debug("Retrying...")
+            yield failure.request
+        else:
+            self.logger.error("Error on %s", failure.request.url)
