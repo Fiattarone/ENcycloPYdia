@@ -4,10 +4,17 @@ import json
 import requests
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
-import lxml
 import math
 import pprint
 from collections import OrderedDict, defaultdict
+
+# import click
+
+
+# from spider import ENPYSpider
+
+# Proxy list x1000
+# https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt
 
 headers = {
     "Accept-Language": "en-US,en;q=0.9",
@@ -104,16 +111,9 @@ def validate_json(filename):
         obj2 = None
         for line in f:
             json_str += line
-            # print(json_str)
-            # if 'es", "definition": ' in json_str:
-            #     json_str = json_str[0:-21]
-            #     json_str += '}]}'
-            #     print(json_str)
             try:
-                print('inside try')
                 obj = json.loads(json_str)
             except json.decoder.JSONDecodeError:
-                print(obj)
                 json_str = ''
                 cprint(Fore.RED, "ERROR, JSON CORRUPT")
                 continue
@@ -255,6 +255,17 @@ def load_from_hash():
     return enpy_file
 
 
+# def test_spider():
+#     """
+#     Testing proxy spider...
+#     :return:
+#     """
+#     print("about to start requests")
+#     enpy_spider = ENPYSpider()
+#
+#     print("spider finished")
+
+
 enpy = {}
 stats = {
     'average_seconds_to_scrape': 0,
@@ -278,7 +289,9 @@ if __name__ == '__main__':
         except Exception:
             with open('stats.json', 'w') as outstats:
                 json.dump(stats, outstats)
-                print('Opening blank stats.')
+                print('Writing a blank stats file.')
+    except FileNotFoundError:
+        print('Stats have already been merged!')
 
     words_this_session = 0
     program_start_time = time.time()
@@ -327,8 +340,15 @@ if __name__ == '__main__':
     user_input = ''
     list_loaded = True
 
+    # try:
+    #     while user_input != 'ml' and user_input != 'mh' and user_input != 'b':
+    #         if input("test our spider? (y/n) ").lower() == 'y':
+    #             test_spider()
+    # finally:
+    #     print('spider tested')
+
     try:
-        while user_input != 'ml' and user_input != 'mh' and user_input != 'b':
+        while user_input != 'ml' and user_input != 'mh' and user_input != 'b' or len(user_input) > 2:
             user_input = input("Do you want to load from main_list, main_hash, or backup? (ml/mh/b) ").lower()
 
         if user_input == 'ml':
