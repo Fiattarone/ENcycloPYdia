@@ -40,6 +40,39 @@ class ENPYSpider(scrapy.Spider):
                                      errback=self.handle_error,
                                      dont_filter=True)
 
+        """
+        Need to find more proxy lists
+        Need to now target sources for words in ENPY_json 
+        -- load ENPY_json in init
+        -- word by word, check for definitions:
+        --- Google.com/define_X 
+        --- Dictionary.com
+        --- Oxford
+        --- Merriam Webster
+        --- Macmillian? Cambridge?
+        --- Urban Dictionary? I mean, might as well
+        
+        -- Synonyms:
+        --- Thesaurus.com
+        --- Synonym.com
+        --- Synonyms.com
+        --- Synonym Finder
+        ---- https://www.makeuseof.com/tag/10-online-synonym-dictionaries-find-similar-word/
+        
+        -- Antonyms:
+        --- Thesaurus.com   
+        
+        -- Misc: 
+        --- https://www.collinsdictionary.com/us/dictionary/english-thesaurus
+        
+        Have an idea: 
+            Data file that contains statistics for each word, some immediate contenders being:
+                1) which sources failed 
+                2) number of sources that contributed
+                3) source percentage? 
+                
+        """
+
     def parse(self, response):
         print(response.text)
 
