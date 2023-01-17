@@ -70,7 +70,9 @@ class ENPYSpider(scrapy.Spider):
                 1) which sources failed 
                 2) number of sources that contributed
                 3) source percentage? 
-                
+        
+        We also need to grab the description of the definition (noun, verb, etc)
+        
         """
 
     def parse(self, response):
