@@ -7,6 +7,11 @@ from colorama import Fore, Style
 import math
 import pprint
 from collections import OrderedDict, defaultdict
+import pymongo
+from pymongo import MongoClient, InsertOne
+from pymongo.errors import BulkWriteError
+from gridfs import GridFS
+import os
 
 # import click
 
@@ -255,15 +260,19 @@ def load_from_hash():
     return enpy_file
 
 
-# def test_spider():
-#     """
-#     Testing proxy spider...
-#     :return:
-#     """
-#     print("about to start requests")
-#     enpy_spider = ENPYSpider()
-#
-#     print("spider finished")
+def mongo_import():
+    username = os.environ.get('MONGO_USERNAME')
+    password = os.environ.get('MONGO_PASSWORD')
+
+    client = MongoClient(f'mongodb+srv://{username}:{password}@enpy.zlfmxbq.mongodb.net/?retryWrites=true&w=majority')
+
+    db = client.ENPY
+    fs = GridFS(db)
+
+    with open(r'ENcycloPYdia_hashed.json') as f:
+        json_data = json.load(f)
+        json_file_id = fs.put(json.dumps(json_data).encode())
+    client.close()
 
 
 enpy = {}
@@ -346,6 +355,9 @@ if __name__ == '__main__':
     #             test_spider()
     # finally:
     #     print('spider tested')
+    if input('Do you want to export json to mongoDB? ').lower() == 'y':
+        mongo_import()
+        print("IMPORT COMPLETED")
 
     try:
         while user_input != 'ml' and user_input != 'mh' and user_input != 'b' or len(user_input) > 2:
@@ -553,6 +565,8 @@ if __name__ == '__main__':
         stats['average_words_per_hour'] = ((end_time - program_start_time)/(60*60)) / words_this_session
         stats['average_words_per_day'] = ((end_time - program_start_time) / (60 * 60 * 24)) / words_this_session
 
+        print("Finished running words.")
+
         # Output stats to json
         try:
             if count % 25 == 24:
@@ -577,4 +591,3 @@ if __name__ == '__main__':
             json.dump(stats, outfile)
         print("STATS MAINFILE SAVED.")
 
-    print("Finished running words.")

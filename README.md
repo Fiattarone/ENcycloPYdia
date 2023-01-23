@@ -64,6 +64,18 @@ I have the stats in a separate JSON file currently. They'll merge. Just give the
 7) Profit! 
 
 ---
+## THE DB 
+
+Experimenting with uploading the json to a DB for all to access. If I start incurring fees from this then we're going to
+Elon-up and make a subscription model. 🤪
+
+Here's the codes for future reference. 
+
+```
+mongoimport --uri "mongodb+srv://enpy:test123@cluster.mongodb.net/ENPY" --collection ENPY --file /Users/dfiatt/Documents/web_development/ENcycloPYdia/ENcycloPYdia_hashed.json
+```
+
+---
 ## Le Memes:
 
 ![NickCage](memes/NickCage.jpg)

@@ -1,4 +1,6 @@
 import scrapy
+import json
+import os
 from itertools import cycle
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import TimeoutError
@@ -7,7 +9,7 @@ from twisted.internet.error import TimeoutError
 class ENPYSpider(scrapy.Spider):
     name = 'ENPYSpider'
     proxy_pool = ''
-    start_urls = ["http://httpbin.org/ip"]
+    start_urls = []
     proxy_list = []
 
     headers = {
@@ -25,6 +27,34 @@ class ENPYSpider(scrapy.Spider):
     }
 
     def start_requests(self):
+        """
+        BEFORE ANYTHING:
+        --TEST PROXY LIST TO SEE WHAT WE'RE WORKING WITH!
+        """
+        enpy_file = {}
+        try:
+            print('attempting to open list2')
+            # print(os.getcwd())
+            with open('../ENcycloPYdia.json', 'r') as openlist:
+                print('attempting to open list')
+                print(openlist)
+                enpy_file = json.load(openlist)
+                print("Opened mainfile--load from list successful")
+        except Exception:
+            # try loading from backup
+            print("Mainfile failed, attempting to load from backup...")
+            try:
+                with open("../../../ENcycloPYdia-backup.json", "r") as openlist:
+                    enpy_file = json.load(openlist)
+                    print("Opened mainfile--load from list successful")
+            except Exception:
+                print("Backup failed to load.")
+                return False
+
+        # Create URLs -- TESTING PROXIES WITH DICTIONARY.COM FIRST
+        for word_entry in enpy_file['words']:
+            self.start_urls.append(f"https://www.dictionary.com/browse/{word_entry['word']}")
+
         import requests
 
         proxy_list = requests.get('https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt').text.split(
@@ -33,12 +63,12 @@ class ENPYSpider(scrapy.Spider):
         self.proxy_pool = cycle(self.proxy_list)
 
         for url in self.start_urls:
-            for count, prox in enumerate(self.proxy_pool):
-                proxy = next(self.proxy_pool)
-                print(f"TRYING PROXY #{count}, IP: {proxy}")
-                yield scrapy.Request(url=url, meta={'proxy': proxy, 'X-Forwarded-For': ' '}, headers=self.headers,
-                                     errback=self.handle_error,
-                                     dont_filter=True)
+            # for count, prox in enumerate(self.proxy_pool):
+            proxy = next(self.proxy_pool)
+                # print(f"TRYING PROXY #{count}, IP: {proxy}")
+            yield scrapy.Request(url=url, meta={'proxy': proxy, 'X-Forwarded-For': ' '}, headers=self.headers,
+                                 errback=self.handle_error,
+                                 dont_filter=True)
 
         """
         Need to find more proxy lists
@@ -70,13 +100,15 @@ class ENPYSpider(scrapy.Spider):
                 1) which sources failed 
                 2) number of sources that contributed
                 3) source percentage? 
+                4) last updated
         
         We also need to grab the description of the definition (noun, verb, etc)
         
         """
 
     def parse(self, response):
-        print(response.text)
+        print("Parsing!")
+        # print(response.text)
 
     def handle_error(self, failure):
         if failure.check(HttpError):
