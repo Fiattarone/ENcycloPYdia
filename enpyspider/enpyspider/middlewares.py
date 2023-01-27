@@ -38,6 +38,67 @@ from scrapy.http import HtmlResponse
 #             return request
 #         return response
 
+class RetryChangeProxyMiddleware:
+    def __init__(self, proxy_list, valid_proxies):
+        self.valid_proxies = valid_proxies
+        self.proxy_pool = cycle(valid_proxies)
+        self.proxy_list = proxy_list
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(
+            proxy_list=crawler.settings.get('PROXY_LIST'),
+            valid_proxies=crawler.settings.get('VALID_PROXIES'),
+        )
+
+    def process_request(self, request, spider):
+        if 'proxy' in request.meta:
+            if request.meta['proxy'] not in self.valid_proxies:
+                self.valid_proxies.append(request.meta['proxy'])
+                self.proxy_pool = cycle(self.valid_proxies)
+        request.meta['proxy'] = next(self.proxy_pool)
+
+    def process_response(self, request, response, spider):
+        if response.status in [403, 429]:
+            self.valid_proxies.remove(request.meta['proxy'])
+            self.proxy_pool = cycle(self.valid_proxies)
+            reason = f'Received {response.status}'
+            return self._retry(request, reason, spider) or response
+        return response
+
+    def process_exception(self, request, exception, spider):
+        if isinstance(exception, self.EXCEPTIONS_TO_RETRY) \
+                and not request.meta.get('dont_retry', False):
+            self.valid_proxies.remove(request.meta['proxy'])
+            self.proxy_pool = cycle(self.valid_proxies)
+            return self._retry(request, exception, spider)
+
+    def _retry(self, request, reason, spider):
+        retries = request.meta.get('retry_times', 0) + 1
+
+        retryreq = request.copy()
+        retryreq.meta['retry_times'] = retries
+        retryreq.dont_filter = True
+        retryreq.priority = request.priority + self.priority_adjust
+
+        if retries <= self.max_retry_times:
+            spider.logger.debug(
+                "Retrying %(request)s (failed %(retries)d times): %(reason)s",
+                {'request': request, 'retries': retries, 'reason': reason},
+                extra={'spider': spider}
+            )
+            return retryreq
+        else:
+            spider.logger.debug(
+                "Gave up retrying %(request)s (failed %(retries)d times): %(reason)s",
+                {'request': request, 'retries': retries, 'reason': reason}, extra={'spider': spider}
+            )
+
+        # remove the failed proxy from the valid proxies list and proxy_pool generator
+        self.valid_proxies.remove(request.meta['proxy'])
+        self.proxy_pool = cycle(self.valid_proxies)
+        return None
+
 
 
 class EnpyspiderSpiderMiddleware:

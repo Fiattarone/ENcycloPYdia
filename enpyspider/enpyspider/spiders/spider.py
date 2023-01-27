@@ -4,6 +4,8 @@ import os
 from itertools import cycle
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import TimeoutError
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
 
 
 class ENPYSpider(scrapy.Spider):
@@ -60,12 +62,32 @@ class ENPYSpider(scrapy.Spider):
         proxy_list = requests.get('https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt').text.split(
             "\n")
         self.proxy_list = [proxy for proxy in proxy_list if proxy]
-        self.proxy_pool = cycle(self.proxy_list)
+
+        valid_proxies = []
+
+        # Test each proxy by making concurrent requests to a test URL
+        with ThreadPoolExecutor() as executor:
+            future_to_proxy = {
+                executor.submit(requests.get, "http://httpbin.org/ip", proxies={"http": proxy, "https": proxy},
+                                timeout=5): proxy for proxy in self.proxy_list}
+            for future in tqdm(as_completed(future_to_proxy), total=len(self.proxy_list), position=0, leave=True,
+                               colour='green'):
+                proxy = future_to_proxy[future]
+                try:
+                    response = future.result()
+                    if response.status_code == 200:
+                        valid_proxies.append(proxy)
+                    tqdm.update()
+                except Exception:
+                    pass
+
+        print(valid_proxies)
+        print(len(valid_proxies))
+        self.proxy_pool = cycle(valid_proxies)
 
         for url in self.start_urls:
             # for count, prox in enumerate(self.proxy_pool):
             proxy = next(self.proxy_pool)
-                # print(f"TRYING PROXY #{count}, IP: {proxy}")
             yield scrapy.Request(url=url, meta={'proxy': proxy, 'X-Forwarded-For': ' '}, headers=self.headers,
                                  errback=self.handle_error,
                                  dont_filter=True)
