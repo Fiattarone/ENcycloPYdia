@@ -6,6 +6,23 @@ from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import TimeoutError
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
+import asyncio
+from proxybroker import Broker
+
+"""
+
+ It looks like some proxies are still not working. Maybe try a known valid proxy upon fail
+ 
+ Maybe give proxies strikes. The proxy with the most strikes gets kicked from the pool. 
+ 
+ So part of the problem with having various sources is that there are different https behaviors and responses for each
+ source
+ 
+ Dictionary.com gives a 301 for a word that doesn't exist
+ 
+ 
+"""
+
 
 
 class ENPYSpider(scrapy.Spider):
@@ -28,11 +45,46 @@ class ENPYSpider(scrapy.Spider):
         'Accept-Language': 'en-US,en;q=0.9',
     }
 
+    async def save(self, proxies, filename):
+        """Save proxies to a file."""
+        with open(filename, 'w') as f:
+            while True:
+                proxy = await proxies.get()
+                if proxy is None:
+                    break
+                # proto = 'https' if 'HTTPS' in proxy.types else 'http'
+                # row = '%s://%s:%d\n' % (proto, proxy.host, proxy.port)
+                row = '%s:%d\n' % (proxy.host, proxy.port)
+                f.write(row)
+        print('\n\n\nSAVED\n\n\n!')
+
+    async def show(self, proxies):
+        while True:
+            proxy = await proxies.get()
+            if proxy is None: break
+            print('Found proxy: %s' % proxy)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        dnsbl = ['bl.spamcop.net', 'cbl.abuseat.org', 'dnsbl.sorbs.net',
+                 'zen.spamhaus.org', 'bl.mcafee.com', 'spam.spamrats.com']
+
+        proxies = asyncio.Queue()
+        broker = Broker(proxies)
+        tasks = asyncio.gather(
+            broker.find(types=['CONNECT:25', 'HTTPS'], dnsbl=dnsbl, limit=1500),
+            self.save(proxies, filename='proxies.txt'))
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(tasks)
+        print("Got proxies!")
+
     def start_requests(self):
         """
         BEFORE ANYTHING:
         --TEST PROXY LIST TO SEE WHAT WE'RE WORKING WITH!
         """
+
         enpy_file = {}
         try:
             print('attempting to open list2')
@@ -57,33 +109,14 @@ class ENPYSpider(scrapy.Spider):
         for word_entry in enpy_file['words']:
             self.start_urls.append(f"https://www.dictionary.com/browse/{word_entry['word']}")
 
-        import requests
+        with open('./proxies.txt', 'r') as open_proxies:
+                print('attempting to open proxies')
+                print(open_proxies)
+                proxy_list = open_proxies.readlines()
+                print("Opened mainfile--load from list successful")
+        self.proxy_list = [proxy.strip() for proxy in proxy_list if proxy]
 
-        proxy_list = requests.get('https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt').text.split(
-            "\n")
-        self.proxy_list = [proxy for proxy in proxy_list if proxy]
-
-        valid_proxies = []
-
-        # Test each proxy by making concurrent requests to a test URL
-        with ThreadPoolExecutor() as executor:
-            future_to_proxy = {
-                executor.submit(requests.get, "http://httpbin.org/ip", proxies={"http": proxy, "https": proxy},
-                                timeout=5): proxy for proxy in self.proxy_list}
-            for future in tqdm(as_completed(future_to_proxy), total=len(self.proxy_list), position=0, leave=True,
-                               colour='green'):
-                proxy = future_to_proxy[future]
-                try:
-                    response = future.result()
-                    if response.status_code == 200:
-                        valid_proxies.append(proxy)
-                    tqdm.update()
-                except Exception:
-                    pass
-
-        print(valid_proxies)
-        print(len(valid_proxies))
-        self.proxy_pool = cycle(valid_proxies)
+        self.proxy_pool = cycle(proxy_list)
 
         for url in self.start_urls:
             # for count, prox in enumerate(self.proxy_pool):

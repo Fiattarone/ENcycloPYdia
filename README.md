@@ -53,6 +53,21 @@ Here's the format of the JSON in its current state:
 I have the stats in a separate JSON file currently. They'll merge. Just give them time to warm up to each other. 
 
 ---
+## SETUP
+
+Uh so this section needs some work. 
+
+### enpyspider:
+
+This section needs work. 
+Change your ulimit though in terminal to be able to send more than 256 concurrent requests at once.
+For Mac & Linux users:
+
+    ulimit -n 2048
+
+
+
+---
 ## TODO
 
 1) Rotating proxy incorporation for future scrapes 

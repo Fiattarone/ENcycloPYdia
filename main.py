@@ -41,7 +41,7 @@ Need to read words.txt line by line and compile a JSON that contains:
             definition: "" || {},
             synonyms: "" || {},
             antonyms: "" || {},
-            topics: "", <-- ditch for now.*
+            topics: "", <-- ditch for now.*     
         },...
     ],
     "stats": etc
@@ -284,6 +284,31 @@ stats = {
     'average_words_per_day': 0
 }
 
+
+def mongo_import_words():
+    username = os.environ.get('MONGO_USERNAME')
+    password = os.environ.get('MONGO_PASSWORD')
+
+    # create a MongoClient object
+    client = pymongo.MongoClient(f'mongodb+srv://{username}:{password}@enpy.zlfmxbq.mongodb.net/?retryWrites=true&w=majority')
+
+    # select the database and collection
+    db = client['ENPY']
+    collection = db['enpyOrdered']
+
+    # open the JSON file and load the data
+    with open("ENcycloPYdia.json") as f:
+        enpy_data = json.load(f)
+
+    # iterate through the "words" array and insert each word as a separate document
+    for count, new_word in enumerate(enpy_data["words"]):
+        print(f"Inserting... {new_word['word']}")
+        collection.insert_one(new_word)
+        print(f'Words remaining... {len(enpy_data["words"])-count}')
+
+    print("Import complete!")
+
+
 if __name__ == '__main__':
     # Load previous stats from json
     try:
@@ -355,9 +380,14 @@ if __name__ == '__main__':
     #             test_spider()
     # finally:
     #     print('spider tested')
-    if input('Do you want to export json to mongoDB? ').lower() == 'y':
+    if input('Do you want to import json to mongoDB? ').lower() == 'y':
         mongo_import()
         print("IMPORT COMPLETED")
+
+    if input('Do you want to import each word to mongoDB? ').lower() == 'y':
+        mongo_import_words()
+        print("IMPORT COMPLETED")
+
 
     try:
         while user_input != 'ml' and user_input != 'mh' and user_input != 'b' or len(user_input) > 2:

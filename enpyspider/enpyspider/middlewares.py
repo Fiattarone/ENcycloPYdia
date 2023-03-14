@@ -11,32 +11,10 @@ from itemadapter import is_item, ItemAdapter
 
 import random
 import requests
-from scrapy.exceptions import NotConfigured
+from scrapy.exceptions import NotConfigured, IgnoreRequest
 from scrapy.http import HtmlResponse
+from itertools import cycle
 
-
-# class RotatingProxyMiddleware:
-#
-#     def __init__(self):
-#         self.proxy_list_url = 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt'
-#         self.proxies = []
-#         self.load_proxies()
-#
-#     def load_proxies(self):
-#         response = requests.get(self.proxy_list_url)
-#         self.proxies = response.text.strip().split('\n')
-#
-#     def process_request(self, request, spider):
-#         proxy = random.choice(self.proxies)
-#         request.meta['proxy'] = proxy
-#
-#     def process_response(self, request, response, spider):
-#         if response.status != 200:
-#             proxy = request.meta['proxy']
-#             self.proxies.remove(proxy)
-#             request.meta['proxy'] = random.choice(self.proxies)
-#             return request
-#         return response
 
 class RetryChangeProxyMiddleware:
     def __init__(self, proxy_list, valid_proxies):
@@ -64,11 +42,12 @@ class RetryChangeProxyMiddleware:
             self.proxy_pool = cycle(self.valid_proxies)
             reason = f'Received {response.status}'
             return self._retry(request, reason, spider) or response
+        if response.status == 301:
+            raise IgnoreRequest
         return response
 
     def process_exception(self, request, exception, spider):
-        if isinstance(exception, self.EXCEPTIONS_TO_RETRY) \
-                and not request.meta.get('dont_retry', False):
+        if isinstance(exception, ConnectionRefusedError):
             self.valid_proxies.remove(request.meta['proxy'])
             self.proxy_pool = cycle(self.valid_proxies)
             return self._retry(request, exception, spider)
@@ -98,7 +77,6 @@ class RetryChangeProxyMiddleware:
         self.valid_proxies.remove(request.meta['proxy'])
         self.proxy_pool = cycle(self.valid_proxies)
         return None
-
 
 
 class EnpyspiderSpiderMiddleware:

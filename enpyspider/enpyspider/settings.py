@@ -20,7 +20,8 @@ NEWSPIDER_MODULE = 'enpyspider.spiders'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 1000
+CONCURRENT_REQUESTS = 350
+AUTOTHROTTLE_TARGET_CONCURRENCY = 300
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -53,7 +54,7 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 128
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 PROXY_POOL_ENABLED = True
 RETRY_TIMES = 0
-DOWNLOAD_TIMEOUT = 60
+DOWNLOAD_TIMEOUT = 15
 
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None,
@@ -61,6 +62,9 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
     # 'enpyspider.middlewares.RotatingProxyMiddleware': 740,
 }
+
+REDIRECT_ENABLED = False
+HTTPERROR_ALLOWED_CODES = [301, 404]
 
 ROTATING_PROXY_LIST_URL = 'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt'
 
