@@ -20,15 +20,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j0itm2#rayn7*(*u57m5eoo!n2(#&1b7qv72(rn*ig3oyc$yin'
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+#         'LOCATION': 'unix:/tmp/memcached.sock',
+#     },
+#     'cache-for-ratelimiting': {
+#         'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+#         'LOCATION': 'unix:/tmp/memcached.sock',
+#     },
+# }
 
 
+# RATELIMIT_USE_CACHE = 'cache-for-ratelimiting'
+
+
+
+ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOST_ONE"), os.environ.get("ALLOWED_HOST_TWO"),
+                 os.environ.get("ALLOWED_HOST_THREE")]
+
+# RATELIMIT_KEY = 'user' # or any other key that you want to use
+# RATELIMIT_FAIL_OPEN=True
+RATELIMIT_VIEW = 'enpyapp.views.ratelimited_error'
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,6 +60,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'djongo',
     'enpyapp',
+    'ratelimit',
+    # 'django-ratelimit'
 ]
 
 MIDDLEWARE = [
@@ -50,6 +72,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'ratelimit.middleware.RatelimitMiddleware'
 ]
 
 ROOT_URLCONF = 'ENPYBase.urls'

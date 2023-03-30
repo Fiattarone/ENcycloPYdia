@@ -15,10 +15,11 @@ Including another URLconf
 """
 
 from django.urls import path
-from enpyapp.views import find_document_by_word
+from enpyapp.views import find_document_by_word, see_ip_and_header
+from ratelimit.decorators import ratelimit
 
 urlpatterns = [
-    path('find/<str:word>/', find_document_by_word),
+    path('find/<str:word>/',find_document_by_word),
 ]
 
 
